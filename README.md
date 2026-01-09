@@ -7,7 +7,7 @@ An end-to-end machine learning pipeline for predicting **NBA player points props
 - Automated **daily inference with styled Excel output**
 
 ---
-DISCLAiMER
+DISCLAIMER
 This project is for educational and analytical purposes only.
 No betting advice is provided.
 
