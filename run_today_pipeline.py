@@ -30,13 +30,13 @@ STEPS = [
 
 def run_step(title: str, cmd: list[str]) -> None:
     print("\n" + "=" * 50)
-    print(f"▶ {title}")
+    print(f"{title}")
     print(f"$ {' '.join(cmd)}")
     print("=" * 50)
 
     result = subprocess.run(cmd, text=True)
     if result.returncode != 0:
-        print("\n❌ PIPELINE STOPPED")
+        print("\nPIPELINE STOPPED")
         print(f"Failed step: {title}")
         print(f"Command: {' '.join(cmd)}")
         sys.exit(1)
@@ -44,7 +44,7 @@ def run_step(title: str, cmd: list[str]) -> None:
 
 def main() -> None:
     # Quick check: show which python we're using
-    print(f"\n🐍 Using Python: {sys.executable}")
+    print(f"\nUsing Python: {sys.executable}")
 
     required_files = [
         Path("models/minutes_xgb.json"),
@@ -56,17 +56,17 @@ def main() -> None:
     ]
     for f in required_files:
         if not f.exists():
-            print(f"\n❌ Missing required file: {f}")
+            print(f"\nMissing required file: {f}")
             sys.exit(1)
 
-    print("\n🚀 Running NBA Player Points Model pipeline...\n")
+    print("\nRunning NBA Player Points Model pipeline...\n")
     for title, cmd in STEPS:
         run_step(title, cmd)
 
     print("\n" + "=" * 50)
-    print("✅ PIPELINE COMPLETE")
-    print("📄 Output file:")
-    print("   data/processed/today_points_prop_predictions.xlsx")
+    print("PIPELINE COMPLETE")
+    print("Output file:")
+    print("data/processed/today_points_prop_predictions.xlsx")
     print("=" * 50 + "\n")
 
 

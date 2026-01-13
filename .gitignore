@@ -18,6 +18,8 @@ __pycache__/
 data/raw/
 data/processed/
 data/odds_logs/
+data/odds_logs/
+data/archives/
 
 # ===============================
 # Models (keep local only)
@@ -32,12 +34,15 @@ models/
 *.xlsx
 
 # ===============================
-# OS files
+# OS files/editors
 # ===============================
 .DS_Store
 Thumbs.db
+.vscode/
 
 # ===============================
 # Logs
 # ===============================
 *.log
+
+
