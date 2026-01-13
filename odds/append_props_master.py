@@ -22,7 +22,7 @@ def main():
 
     MASTER_PATH.parent.mkdir(parents=True, exist_ok=True)
     combined.to_csv(MASTER_PATH, index=False)
-    print(f"✅ Master saved: {MASTER_PATH.resolve()}")
+    print(f"Master saved: {MASTER_PATH.resolve()}")
     print("Rows in master:", len(combined))
 
 if __name__ == "__main__":

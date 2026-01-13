@@ -67,7 +67,7 @@ def main():
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     pivot.to_csv(OUT_PATH, index=False)
 
-    print("✅ Normalized props saved")
+    print("Normalized props saved")
     print(pivot[["player", "line", "odds_over", "odds_under"]].head())
     print("Rows:", len(pivot))
 

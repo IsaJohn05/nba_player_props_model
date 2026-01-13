@@ -65,7 +65,7 @@ def main():
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     out.to_csv(OUT_PATH, index=False)
 
-    print(f"✅ Labeled props saved: {OUT_PATH}")
+    print(f"Labeled props saved: {OUT_PATH}")
     print("Rows:", len(out))
     print("Over rate:", out["y_over"].mean())
 

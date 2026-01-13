@@ -31,13 +31,13 @@ STEPS = [
 
 def run_step(title: str, cmd: list[str]) -> None:
     print("\n" + "=" * 60)
-    print(f"▶ {title}")
+    print(f"{title}")
     print(f"$ {' '.join(cmd)}")
     print("=" * 60)
 
     result = subprocess.run(cmd, text=True)
     if result.returncode != 0:
-        print("\n❌ PIPELINE STOPPED")
+        print("\nPIPELINE STOPPED")
         print(f"Failed step: {title}")
         print(f"Command: {' '.join(cmd)}")
         sys.exit(1)
@@ -74,13 +74,13 @@ def main() -> None:
     require("odds/normalize_rebounds_props.py")
     require("inference/predict_today_rebounds_props_regression.py")
 
-    print("\n🚀 Running NBA pipeline (Points + Assists + Rebounds)...\n")
+    print("\nRunning NBA pipeline (Points + Assists + Rebounds)...\n")
 
     for title, cmd in STEPS:
         run_step(title, cmd)
 
     print("\n" + "=" * 60)
-    print("✅ PIPELINE COMPLETE")
+    print("PIPELINE COMPLETE")
     print("Output files:")
     print(" - data/processed/today_points_prop_predictions.xlsx")
     print(" - data/processed/today_assists_prop_predictions.xlsx")

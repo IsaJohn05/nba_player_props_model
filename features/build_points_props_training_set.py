@@ -49,7 +49,7 @@ def main():
     )
 
     if merged.empty:
-        print("❌ No rows matched.")
+        print("No rows matched.")
         print("Sample props teams:", props_expanded["TEAM_NAME"].dropna().unique()[:10])
         print("Sample nba teams:", nba["TEAM_NAME"].dropna().unique()[:10])
         print("Sample props players:", props_expanded["player"].dropna().unique()[:10])
@@ -73,7 +73,7 @@ def main():
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     out.to_csv(OUT_PATH, index=False)
 
-    print(f"✅ Saved: {OUT_PATH.resolve()}")
+    print(f"Saved: {OUT_PATH.resolve()}")
     print("Rows matched:", len(out))
     print("Over rate:", out["y_over"].mean())
     print(out.head(10))

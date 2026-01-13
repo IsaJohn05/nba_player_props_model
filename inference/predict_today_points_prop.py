@@ -199,7 +199,6 @@ def load_booster(path: Path) -> xgb.Booster:
     if not path.exists():
         raise RuntimeError(
             f"Missing model file: {path}. "
-            "Train a classifier first (we can do it next), then rerun inference."
         )
     booster = xgb.Booster()
     booster.load_model(str(path))
@@ -260,7 +259,7 @@ def main():
     pred_df = df.dropna(subset=FEATURES).copy()
 
     if pred_df.empty:
-        print("❌ No rows left after feature merge.")
+        print("No rows left after feature merge.")
         print("Common reasons:")
         print("- Player name mismatch between props and nba logs")
         print("- Player traded (team mismatch) so opponent can't be inferred")
@@ -290,7 +289,7 @@ def main():
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     out.to_csv(OUT_PATH, index=False)
 
-    print(f"✅ Saved predictions: {OUT_PATH.resolve()}")
+    print(f"Saved predictions: {OUT_PATH.resolve()}")
     print(out.head(25).to_string(index=False))
 
 

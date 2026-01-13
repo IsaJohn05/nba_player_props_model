@@ -62,14 +62,14 @@ def main():
         )
 
         if odds_resp.status_code != 200:
-            print(f"⚠️ Odds request failed for event {ev['id']}: {odds_resp.status_code} {odds_resp.text[:200]}")
+            print(f"Odds request failed for event {ev['id']}: {odds_resp.status_code} {odds_resp.text[:200]}")
             continue
 
         odds = odds_resp.json()
 
         # Sometimes API returns {"message": "..."} instead of full payload
         if isinstance(odds, dict) and "message" in odds:
-            print(f"⚠️ API message for event {ev['id']}: {odds['message']}")
+            print(f"API message for event {ev['id']}: {odds['message']}")
             continue
 
         bks = odds.get("bookmakers", []) if isinstance(odds, dict) else []
@@ -102,7 +102,7 @@ def main():
 
     # DO NOT write empty files
     if len(rows) == 0:
-        print("❌ No assists props found for FanDuel/bet365.")
+        print("No assists props found for FanDuel/bet365.")
         print("This usually means assists props aren’t posted yet for those books. Try again later or expand BOOKS.")
         return
 
@@ -110,7 +110,7 @@ def main():
     out = OUT_DIR / f"assists_props_{fetched_at.replace(':','-')}.csv"
     df.to_csv(out, index=False)
 
-    print(f"✅ Saved: {out.resolve()} | rows={len(df)}")
+    print(f"Saved: {out.resolve()} | rows={len(df)}")
 
 
 if __name__ == "__main__":

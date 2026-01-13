@@ -115,7 +115,7 @@ def archive_run_points(
         picks_df = pd.concat(picks, ignore_index=True)
         picks_df.to_csv(arch_dir / "picks.csv", index=False)
 
-    print(f"📦 Archived run to: {arch_dir.resolve()}")
+    print(f"Archived run to: {arch_dir.resolve()}")
     return arch_dir
 
 def norm_name(s: str) -> str:
@@ -432,7 +432,7 @@ def main():
 
     pred_df = df.dropna(subset=REQUIRED).copy()
     if pred_df.empty:
-        print("❌ No rows left after merges.")
+        print("No rows left after merges.")
         print("Likely causes: missing players in team map, name mismatch, or team mapping issues.")
         return
 
@@ -562,7 +562,7 @@ def main():
         ws.freeze_panes = "A2"
         
 
-    print(f"✅ Saved Top-11 mixed (max 5 unders, max 1 pick per player) to: {OUT_PATH.resolve()}")
+    print(f"Saved Top-11 mixed (max 5 unders, max 1 pick per player) to: {OUT_PATH.resolve()}")
     print("OVERS:", len(overs_tbl), "| UNDERS:", len(unders_tbl))
     
     # Auto-archive today’s run

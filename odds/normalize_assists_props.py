@@ -55,7 +55,7 @@ def main():
     )
 
     pivot.to_csv(OUT_PATH, index=False)
-    print(f"✅ Saved normalized assists props: {OUT_PATH.resolve()} | rows={len(pivot)}")
+    print(f"Saved normalized assists props: {OUT_PATH.resolve()} | rows={len(pivot)}")
     print(f"Used RAW file: {latest}")
 
 

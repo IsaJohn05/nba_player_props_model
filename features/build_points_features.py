@@ -77,7 +77,7 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
 
     df_feat = df_feat.dropna(subset=required_cols)
 
-    # ✅ NEW TARGET: residual vs baseline
+    # NEW TARGET: residual vs baseline
     # delta_pts = actual points - rolling baseline (pts_last10)
     df_feat["delta_pts"] = df_feat["PTS"] - df_feat["pts_last10"]
 
