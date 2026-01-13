@@ -5,69 +5,87 @@ import sys
 from pathlib import Path
 
 
-PY = sys.executable  # <-- THIS guarantees venv python is used
+PY = sys.executable  # ensures venv python is used
 
 
 STEPS = [
-    (
-        "Update current player → team map",
-        [PY, "data/raw/fetch_current_player_teams.py"],
-    ),
-    (
-        "Fetch today's points props (FanDuel + Bet365) via Odds API",
-        [PY, "odds/fetch_points_props_oddsapi.py"],
-    ),
-    (
-        "Normalize props",
-        [PY, "odds/normalize_points_props.py"],
-    ),
-    (
-        "Run inference (NBA Player Points Model)",
-        [PY, "inference/predict_today_points_props_regression.py"],
-    ),
+    # --- shared ---
+    ("Update current player → team map", [PY, "data/raw/fetch_current_player_teams.py"]),
+
+    # --- POINTS ---
+    ("Fetch today's POINTS props (FanDuel + Bet365)", [PY, "odds/fetch_points_props_oddsapi.py"]),
+    ("Normalize POINTS props", [PY, "odds/normalize_points_props.py"]),
+    ("Run POINTS inference (NBA Player Points Model)", [PY, "inference/predict_today_points_props_regression.py"]),
+
+    # --- ASSISTS ---
+    ("Fetch today's ASSISTS props (FanDuel + Bet365)", [PY, "odds/fetch_assists_props_oddsapi.py"]),
+    ("Normalize ASSISTS props", [PY, "odds/normalize_assists_props.py"]),
+    ("Run ASSISTS inference (NBA Player Assists Model)", [PY, "inference/predict_today_assists_props_regression.py"]),
+
+    # --- REBOUNDS ---
+    ("Fetch today's REBOUNDS props (FanDuel + Bet365)", [PY, "odds/fetch_rebounds_props_oddsapi.py"]),
+    ("Normalize REBOUNDS props", [PY, "odds/normalize_rebounds_props.py"]),
+    ("Run REBOUNDS inference (NBA Player Rebounds Model)", [PY, "inference/predict_today_rebounds_props_regression.py"]),
 ]
 
 
 def run_step(title: str, cmd: list[str]) -> None:
-    print("\n" + "=" * 50)
-    print(f"{title}")
+    print("\n" + "=" * 60)
+    print(f"▶ {title}")
     print(f"$ {' '.join(cmd)}")
-    print("=" * 50)
+    print("=" * 60)
 
     result = subprocess.run(cmd, text=True)
     if result.returncode != 0:
-        print("\nPIPELINE STOPPED")
+        print("\n❌ PIPELINE STOPPED")
         print(f"Failed step: {title}")
         print(f"Command: {' '.join(cmd)}")
         sys.exit(1)
 
 
+def require(path: str) -> Path:
+    p = Path(path)
+    if not p.exists():
+        print(f"\nMissing required file: {p}")
+        sys.exit(1)
+    return p
+
+
 def main() -> None:
-    # Quick check: show which python we're using
     print(f"\nUsing Python: {sys.executable}")
 
-    required_files = [
-        Path("models/minutes_xgb.json"),
-        Path("data/raw/player_game_logs.csv"),
-        Path("data/raw/fetch_current_player_teams.py"),
-        Path("odds/fetch_points_props_oddsapi.py"),
-        Path("odds/normalize_points_props.py"),
-        Path("inference/predict_today_points_props_regression.py"),
-    ]
-    for f in required_files:
-        if not f.exists():
-            print(f"\nMissing required file: {f}")
-            sys.exit(1)
+    # --- Required shared files ---
+    require("models/minutes_xgb.json")
+    require("data/raw/player_game_logs.csv")
+    require("data/raw/fetch_current_player_teams.py")
 
-    print("\nRunning NBA Player Points Model pipeline...\n")
+    # --- Required points ---
+    require("odds/fetch_points_props_oddsapi.py")
+    require("odds/normalize_points_props.py")
+    require("inference/predict_today_points_props_regression.py")
+
+    # --- Required assists ---
+    require("odds/fetch_assists_props_oddsapi.py")
+    require("odds/normalize_assists_props.py")
+    require("inference/predict_today_assists_props_regression.py")
+
+    # --- Required rebounds ---
+    require("odds/fetch_rebounds_props_oddsapi.py")
+    require("odds/normalize_rebounds_props.py")
+    require("inference/predict_today_rebounds_props_regression.py")
+
+    print("\n🚀 Running NBA pipeline (Points + Assists + Rebounds)...\n")
+
     for title, cmd in STEPS:
         run_step(title, cmd)
 
-    print("\n" + "=" * 50)
-    print("PIPELINE COMPLETE")
-    print("Output file:")
-    print("data/processed/today_points_prop_predictions.xlsx")
-    print("=" * 50 + "\n")
+    print("\n" + "=" * 60)
+    print("✅ PIPELINE COMPLETE")
+    print("Output files:")
+    print(" - data/processed/today_points_prop_predictions.xlsx")
+    print(" - data/processed/today_assists_prop_predictions.xlsx")
+    print(" - data/processed/today_rebounds_prop_predictions.xlsx")
+    print("=" * 60 + "\n")
 
 
 if __name__ == "__main__":
