@@ -13,7 +13,7 @@ No betting advice is provided.
 
 ## 🔍 Model Overview
 
-This system estimates player scoring outcomes using the following structure:
+This system estimates player statistical outcomes using the following structure:
 
 For example: **Expected Points**
 
