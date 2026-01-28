@@ -1,6 +1,6 @@
-# 🏀 NBA Player Points Model
+# 🏀 NBA Player Player Stats Model
 
-An end-to-end machine learning pipeline for predicting **NBA player points props** using:
+An end-to-end machine learning pipeline for predicting **NBA player stats props** using:
 - A **minutes prediction model (XGBoost)**
 - A **rate-based scoring model**
 - **Vegas odds comparison** to identify betting edges
@@ -15,7 +15,7 @@ No betting advice is provided.
 
 This system estimates player scoring outcomes using the following structure:
 
-**Expected Points**
+For example: **Expected Points**
 
 Expected Points = Predicted Minutes x Points Per Minute
 
