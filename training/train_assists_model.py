@@ -19,12 +19,23 @@ FEATURES = [
     "ast_std_last10",
 ]
 
-TRAIN_SEASON = "2022-23"
-VAL_SEASON = "2023-24"
+def season_start_year(season: str) -> int:
+    # season like "2024-25" -> 2024
+    try:
+        return int(str(season).split("-")[0])
+    except Exception:
+        return -1
 
 def main():
     df = pd.read_csv(DATA_PATH)
     df["GAME_DATE"] = pd.to_datetime(df["GAME_DATE"])
+
+    seasons = sorted(df["SEASON"].dropna().unique(), key=season_start_year)
+    if len(seasons) < 2:
+        raise RuntimeError(f"Need at least 2 seasons, found: {seasons}")
+
+    TRAIN_SEASON = seasons[-2]
+    VAL_SEASON = seasons[-1]
 
     train_df = df[df["SEASON"] == TRAIN_SEASON].copy()
     val_df = df[df["SEASON"] == VAL_SEASON].copy()
