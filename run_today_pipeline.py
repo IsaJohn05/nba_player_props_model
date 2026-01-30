@@ -68,6 +68,8 @@ def main() -> None:
     require("odds/fetch_assists_props_oddsapi.py")
     require("odds/normalize_assists_props.py")
     require("inference/predict_today_assists_props_regression.py")
+    require("models/assists_xgb.json")
+
 
     # --- Required rebounds ---
     require("odds/fetch_rebounds_props_oddsapi.py")

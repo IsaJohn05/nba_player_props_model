@@ -19,6 +19,7 @@ PROPS_NORM = Path("data/odds_logs/assists_props_normalized.csv")
 
 # Models
 MIN_MODEL_PATH = Path("models/minutes_xgb.json")  # required
+AST_MODEL_PATH = Path("models/assists_xgb.json")  # NEW: assists rate model
 TEAM_MAP_PATH = Path("data/processed/player_team_map_current.csv")  # required
 
 # Output
@@ -118,6 +119,7 @@ def archive_run_assists(
     print(f"Archived assists run to: {arch_dir.resolve()}")
     return arch_dir
 
+
 def norm_name(s: str) -> str:
     s = str(s).lower().strip()
     for tok in [" jr.", " sr.", " iii", " ii", " iv"]:
@@ -168,7 +170,7 @@ def team_to_abbr(team_str: str) -> str | None:
 def build_latest_player_features(nba: pd.DataFrame) -> pd.DataFrame:
     """
     One row per player from historical logs, using rolling features (shift(1) to avoid leakage).
-    Also builds assists rate + volatility for the assists model.
+    Includes assists-related features used by the assists rate model.
     """
     nba = nba.copy()
     nba["GAME_DATE"] = pd.to_datetime(nba["GAME_DATE"])
@@ -199,14 +201,12 @@ def build_latest_player_features(nba: pd.DataFrame) -> pd.DataFrame:
         pdf["tov_last10"] = pdf["TOV"].shift(1).rolling(10).mean()
         pdf["reb_last10"] = pdf["REB"].shift(1).rolling(10).mean()
 
-        # Assists model features
+        # Assists features (inputs to assists model)
         pdf["ast_last10"] = pdf["AST"].shift(1).rolling(10).mean()
-
         pdf["ast_per_min_last10"] = (
             pdf["AST"].shift(1).rolling(10).sum()
             / pdf["MIN"].shift(1).rolling(10).sum()
         )
-
         pdf["ast_std_last10"] = pdf["AST"].shift(1).rolling(10).std()
 
         # Context
@@ -238,7 +238,6 @@ def build_latest_player_features(nba: pd.DataFrame) -> pd.DataFrame:
     ]
     keep = [c for c in keep if c in f.columns]
     return f[keep].drop_duplicates(subset=["player_norm"], keep="last")
-
 
 # -----------------------
 # Excel formatting helpers
@@ -307,6 +306,11 @@ def main():
         raise RuntimeError(f"Missing normalized props file: {PROPS_NORM}")
     if not MIN_MODEL_PATH.exists():
         raise RuntimeError(f"Missing minutes model: {MIN_MODEL_PATH}")
+    if not AST_MODEL_PATH.exists():
+        raise RuntimeError(
+            f"Missing assists model: {AST_MODEL_PATH}\n"
+            "Run: python training/train_assists_model.py"
+        )
     if not TEAM_MAP_PATH.exists():
         raise RuntimeError(
             f"Missing current team map: {TEAM_MAP_PATH}\n"
@@ -315,7 +319,7 @@ def main():
 
     nba = pd.read_csv(NBA_LOGS)
     props = pd.read_csv(PROPS_NORM)
-    
+
     props["commence_time"] = pd.to_datetime(props["commence_time"], utc=True, errors="coerce")
     local_tz = "America/Toronto"
     props_local_date = props["commence_time"].dt.tz_convert(local_tz).dt.date
@@ -329,8 +333,9 @@ def main():
     most_recent = props["commence_time"].max()
     most_recent_local = most_recent.tz_convert("America/Toronto").date()
     if most_recent_local != pd.Timestamp.now(tz="America/Toronto").date():
-        raise RuntimeError(f"Normalized assists file looks stale (latest game date {most_recent_local}). Re-fetch/normalize.")
-
+        raise RuntimeError(
+            f"Normalized assists file looks stale (latest game date {most_recent_local}). Re-fetch/normalize."
+        )
 
     # Filter books and pick best (FD > bet365)
     props["book_key"] = props["book_key"].astype(str).str.lower().str.strip()
@@ -374,7 +379,7 @@ def main():
 
     df["opp_team_abbr"] = df.apply(infer_opp_abbr, axis=1)
 
-    # Player historical features (includes assists features now)
+    # Player historical features (includes assists features)
     player_feats = build_latest_player_features(nba)
     df = df.merge(player_feats, on="player_norm", how="left")
 
@@ -389,13 +394,19 @@ def main():
         "min_last5", "min_last10", "min_std_last10",
         "pts_last10", "fga_last10", "fta_last10", "fg3a_last10",
         "tov_last10", "reb_last10",
-        "rest_days", "is_b2b", "is_home",
-        "is_starter",
+        "rest_days", "is_b2b", "is_home", "is_starter",
     ]
 
-    REQUIRED = MIN_FEATURES + [
-        "ast_per_min_last10",
-        "ast_std_last10",
+    # Assists model features (MUST match your training/train_assists_model.py)
+    AST_FEATURES = [
+        "min_last5", "min_last10", "min_std_last10",
+        "pts_last10", "fga_last10", "fta_last10", "fg3a_last10",
+        "tov_last10", "reb_last10",
+        "rest_days", "is_b2b", "is_home", "is_starter",
+        "ast_last10", "ast_per_min_last10", "ast_std_last10",
+    ]
+
+    REQUIRED = MIN_FEATURES + AST_FEATURES + [
         "line",
         "p_over_implied", "p_under_implied",
         "player_team_abbr", "opp_team_abbr",
@@ -407,13 +418,24 @@ def main():
         print("No rows left after merges.")
         return
 
+    # --- Predict minutes ---
     dmin = xgb.DMatrix(pred_df[MIN_FEATURES].values, feature_names=MIN_FEATURES)
     pred_df["pred_minutes"] = np.clip(min_booster.predict(dmin), 0, 42)
 
-    # Assists mean = minutes * assists-per-minute rate
-    pred_df["ast_mean"] = pred_df["pred_minutes"] * pred_df["ast_per_min_last10"]
+    # --- Predict assists per minute (NEW model) ---
+    ast_booster = load_booster(AST_MODEL_PATH)
+    dast = xgb.DMatrix(pred_df[AST_FEATURES].values, feature_names=AST_FEATURES)
+    pred_df["pred_delta_ast_per_min"] = ast_booster.predict(dast)
 
-    # Normal uncertainty for assists (smaller scale than points)
+    # baseline + delta
+    pred_df["pred_ast_per_min"] = pred_df["ast_per_min_last10"] + pred_df["pred_delta_ast_per_min"]
+
+    # clamps (safety)
+    pred_df["pred_ast_per_min"] = np.clip(pred_df["pred_ast_per_min"], 0, 0.6)
+
+    pred_df["ast_mean"] = pred_df["pred_minutes"] * pred_df["pred_ast_per_min"]
+
+    # Normal uncertainty for assists
     pred_df["sigma"] = pred_df["ast_std_last10"].astype(float).clip(lower=1.5).fillna(2.0)
 
     # P(Over)
@@ -530,7 +552,7 @@ def main():
 
     print(f"Saved Top-11 mixed (max 5 unders, max 1 pick per player) to: {OUT_PATH.resolve()}")
     print("OVERS:", len(overs_tbl), "| UNDERS:", len(unders_tbl))
-    
+
     # Auto-archive today's assists run
     archive_run_assists(
         out_xlsx_path=OUT_PATH,
@@ -539,5 +561,7 @@ def main():
         unders_tbl=unders_tbl,
     )
 
+
 if __name__ == "__main__":
     main()
+

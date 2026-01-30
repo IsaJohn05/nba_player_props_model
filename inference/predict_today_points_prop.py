@@ -247,7 +247,6 @@ def main():
     df = df.merge(team_def_opp, on="opp_team_norm", how="left")
 
     # implied probs + edge
-    df["p_over_implied"] = df.get("p_over_implied", np.nan)
     if "p_over_implied" not in df.columns or df["p_over_implied"].isna().all():
         df["p_over_implied"] = df["odds_over"].apply(american_to_implied)
 
